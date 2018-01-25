@@ -13,7 +13,7 @@ def features_to__image(features):
     return features.reshape(3, 32, 32).transpose(1, 2, 0).astype('uint8')
 
 
-def setup_cnn(mode, dataset, shape):
+def setup_cnn(mode):
     # input_layer = tf.reshape(dataset, [-1, shape[0], shape[1], shape[2]])
     input_layer = tf.placeholder(tf.float32, [None, 32, 32, 3], name='input')
 
@@ -58,7 +58,7 @@ def setup_cnn(mode, dataset, shape):
                                 name='dropout')
     print("dropout: ", dropout.shape)
 
-    logits = tf.layers.dense(inputs=dropout, units=2, name='logits')
+    logits = tf.layers.dense(inputs=dropout, units=10, name='logits')
     print("logits: ", logits.shape)
 
     classes = tf.argmax(logits, axis=1)
@@ -66,41 +66,66 @@ def setup_cnn(mode, dataset, shape):
 
     merged = tf.summary.merge_all()
 
-    return logits, classes, probability, input_layer
+    label = tf.placeholder(tf.float32, [None], name='label')
+
+    # Calculate the average cross entropy loss across the batch.
+    labels = tf.cast(label, tf.int64)
+    cross_entropy = tf.nn.sparse_softmax_cross_entropy_with_logits(
+        labels=labels, logits=logits, name='cross_entropy_per_example')
+    cross_entropy_mean = tf.reduce_mean(cross_entropy, name='cross_entropy')
+
+    tf.summary.scalar('xentropy', cross_entropy_mean)
+    train_op = tf.train.GradientDescentOptimizer(0.1).minimize(cross_entropy_mean)
+
+    return input_layer, label, train_op, cross_entropy_mean, classes, probability
 
 
 dataset = ds.get_dataset()
 
 features = dataset['data']
-labels = [1 if x == 1 or x == 9 else 0 for x in dataset['labels']]
+labels = dataset['labels']
 
-# for i, x in enumerate(labels):
-#     if x == 1:
-#         pic = features[i].reshape(3, 32, 32).transpose(1, 2, 0).astype('uint8')
-#         plt.imshow(pic, interpolation='nearest', aspect='equal')
-#         plt.show()
-
-test0 = features_to__image(features[3])
+# indx = 7
+# test0 = features_to__image(features[indx])
 # plt.figure(num=None, figsize=(1, 1))
 # plt.imshow(test0)
 # plt.show()
 
+mode = tf.estimator.ModeKeys.TRAIN
+
 graph = tf.Graph()
 with graph.as_default():
-    logits, classes, probability, inputs = setup_cnn(tf.estimator.ModeKeys.PREDICT,
-                                                     np.array(features, dtype=np.float32), [3, 32, 32])
+    inputs, label, train_op, loss, prediction, probability = setup_cnn(mode)
 
 with tf.Session(graph=graph) as session:
     saver = tf.train.Saver()
-    # train_writer = tf.summary.FileWriter('/tmp/test1/train', session.graph)
-    # test_writer = tf.summary.FileWriter('/tmp/test1/test')
+    train_writer = tf.summary.FileWriter('/tmp/cnn1/train', session.graph)
+    test_writer = tf.summary.FileWriter('/tmp/cnn1/test')
 
-    if os.path.isfile(MODEL_FILE+".index"):
+    if os.path.isfile(MODEL_FILE + ".index"):
         saver.restore(session, MODEL_FILE)
     else:
         tf.global_variables_initializer().run()
+
+    if mode == tf.estimator.ModeKeys.PREDICT:
+        prediction_, probability_ = session.run([prediction, probability], {inputs: [test0]})
+        print ("classes: %s, prediction: %s, real: %s" % (prediction_, probability_, labels[indx]))
+
+    elif mode == tf.estimator.ModeKeys.TRAIN:
+        for k in range(100):
+            i = 1
+            mini_batch = 100
+            while i + mini_batch < 10000:
+                images = []
+                labels_batch = []
+                for j in range(mini_batch):
+                    image = features[j + i - 1].reshape(3, 32, 32).transpose(1, 2, 0).astype('uint8')
+                    images.append(image)
+                    labels_batch.append(labels[j + i - 1])
+
+                _, loss_ = session.run([train_op, loss], {inputs: images, label: labels_batch})
+                i += mini_batch
+                print ("loss", loss_)
+
         print('saving model to file')
         saver.save(session, MODEL_FILE)
-
-    l, c, p = session.run([logits, classes, probability], {inputs: [test0]})
-    print ("logits: %s, classes: %s, prediction: %s" % (l, c, p))
