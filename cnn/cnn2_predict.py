@@ -24,6 +24,9 @@ import matplotlib.pyplot as plt
 
 tf.logging.set_verbosity(tf.logging.INFO)
 
+classes = ['Airplane', 'Automobile', 'Bird', 'Cat', 'Deer', 'Dog',
+           'Frog', 'Horse', 'Ship', 'Truck']
+
 
 def features_to__image(features):
     return features.reshape(3, 32, 32).transpose(1, 2, 0).astype('uint8')
@@ -60,7 +63,7 @@ def cnn_model_fn(features, labels, mode):
     logits = tf.layers.dense(inputs=dropout, units=10)
 
     predictions = {
-        "classes": tf.argmax(input=logits, axis=1),
+        "class": tf.argmax(input=logits, axis=1),
         "probabilities": tf.nn.softmax(logits, name="softmax_tensor")
     }
     if mode == tf.estimator.ModeKeys.PREDICT:
@@ -95,7 +98,9 @@ cnn_input_fn = tf.estimator.inputs.numpy_input_fn(x={"x": train_data[indx].resha
 
 result = cnn_classifier.predict(cnn_input_fn)
 
-print(result.next())
+r = result.next()
+print(r)
+print ('class: %s' % classes[r['class']])
 
 test0 = features_to__image(train_data[indx])
 plt.figure(num=None, figsize=(1, 1))
