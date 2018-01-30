@@ -24,19 +24,23 @@
 
 import sys, pygame, random
 import numpy as np
+import relearn.breakout.brain.random as rand
+import relearn.breakout.brain.nn as nn
 
+class Breakout:
 
-class Breakout():
+    def __init__(self, brain):
+        self.brain = brain
 
     def main(self):
-
+        self.brain.start()
         xspeed_init = 6
         yspeed_init = 6
         max_lives = 5
         bat_speed = 30
         score = 0
         bgcolour = 0x2F, 0x4F, 0x4F  # darkslategrey        
-        size = width, height = 640, 480
+        size = width, height = 600, 600
 
         pygame.init()
         screen = pygame.display.set_mode(size)
@@ -50,7 +54,7 @@ class Breakout():
         ballrect = ball.get_rect()
 
         pong = pygame.mixer.Sound('Blip_1-Surround-147.wav')
-        pong.set_volume(10)
+        pong.set_volume(0)
 
         wall = Wall()
         wall.build_wall(width)
@@ -68,7 +72,7 @@ class Breakout():
         while 1:
 
             # 60 frames per second
-            clock.tick(60)
+            clock.tick(300)
 
             move = self.choose_action()
 
@@ -140,30 +144,8 @@ class Breakout():
                 yspeed = yspeed_init
                 ballrect.center = width * random.random(), height / 3
                 if lives == 0:
-                    msg = pygame.font.Font(None, 70).render("Game Over", True, (0, 255, 255), bgcolour)
-                    msgrect = msg.get_rect()
-                    msgrect = msgrect.move(width / 2 - (msgrect.center[0]), height / 3)
-                    screen.blit(msg, msgrect)
-                    pygame.display.flip()
-                    # process key presses
-                    #     - ESC to quit
-                    #     - any other key to restart game
-                    while 1:
-                        restart = False
-                        for event in pygame.event.get():
-                            if event.type == pygame.QUIT:
-                                sys.exit()
-                            if event.type == pygame.KEYDOWN:
-                                if event.key == pygame.K_ESCAPE:
-                                    sys.exit()
-                                if not (event.key == pygame.K_LEFT or event.key == pygame.K_RIGHT):
-                                    restart = True
-                        if restart:
-                            screen.fill(bgcolour)
-                            wall.build_wall(width)
-                            lives = max_lives
-                            score = 0
-                            break
+                    self.brain.end()
+                    return
 
             if xspeed < 0 and ballrect.left < 0:
                 xspeed = -xspeed
@@ -185,6 +167,7 @@ class Breakout():
                 pong.play(0)
                 wall.brickrect[index:index + 1] = []
                 score += 10
+                self.brain.new_score(score)
 
             screen.fill(bgcolour)
             scoretext = pygame.font.Font(None, 40).render(str(score), True, (0, 255, 255), bgcolour)
@@ -208,10 +191,8 @@ class Breakout():
 
     def choose_action(self):
         s = pygame.Surface.copy(pygame.display.get_surface())
-        pxarray = pygame.surfarray.pixels2d(s).reshape((1, 307200))
-
-        move = np.random.randint(0, 3) - 1
-        return move
+        state = pygame.surfarray.pixels3d(s)
+        return self.brain.choose_action(state)
 
 
 class Wall():
@@ -242,5 +223,11 @@ class Wall():
 
 
 if __name__ == '__main__':
-    br = Breakout()
-    br.main()
+    # brain = rnd.RandomBrain()
+    brain = nn.ReinforcementLearningBrain()
+    br = Breakout(brain)
+    i = 0
+    while 1:
+        i += 1
+        print('game %s' % i)
+        br.main()
