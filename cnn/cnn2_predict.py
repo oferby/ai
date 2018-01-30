@@ -93,7 +93,7 @@ train_labels = np.array(dataset['labels'], dtype=np.int32)
 cnn_classifier = tf.estimator.Estimator(
     model_fn=cnn_model_fn, model_dir="/tmp/cnn_convnet_model")
 
-indx = 11
+indx = np.random.randint(0, len(train_labels))
 cnn_input_fn = tf.estimator.inputs.numpy_input_fn(x={"x": train_data[indx].reshape((1, -1))}, shuffle=False)
 
 result = cnn_classifier.predict(cnn_input_fn)
