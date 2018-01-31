@@ -1,3 +1,4 @@
+import numpy as np
 import tensorflow as tf
 import relearn.breakout.cnn as cnn
 
@@ -15,28 +16,50 @@ class ReinforcementLearningBrain:
         self.actions = []
         self.classifier = create_cnn()
         self.trained = False
+        self.step = 0
+        gama = 0.97  # discount factor
 
     def choose_action(self, state):
+        self.step += 1
         if self.trained:
-            action, scores = self.predict(state)
-            self.states.append(state)
-            self.actions.append(scores)
-            if action == 0:
-                return -1
-            return 1
+            #  act greedy with random
+            coin = np.random.randint(5000 + self.step)
+            if coin > 2500:
+                action, scores = self.predict(state)
+                self.states.append(state)
+                self.actions.append(scores)
+                if action == 0:
+                    return -1
+                return 1
+            else:
+                return self.do_random()
         else:
             self.states.append(state)
-            self.actions.append([0, 1, 0])
-            return 0
+            return self.do_random()
+
+    def do_random(self):
+        _move = np.random.randint(0, 3)
+        new_state = [0, 0, 0]
+        new_state[_move] = 1
+        move = _move - 1
+        self.actions.append(new_state)
+        return move
 
     def new_score(self, score):
         print('new score %s' % score)
+        print('num of states: %s' % len(self.states))
+        self.calc_q_values(score)
 
     def start(self):
         print('start new game')
 
     def end(self):
         print('end of game')
+        self.states = []
+        self.actions = []
+
+    def calc_q_values(self, score):
+        i = len(self.actions)
 
     def train(self):
         train_input_fn = tf.estimator.inputs.numpy_input_fn(

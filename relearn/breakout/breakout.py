@@ -24,8 +24,9 @@
 
 import sys, pygame, random
 import numpy as np
-import relearn.breakout.brain.random as rand
+import relearn.breakout.brain.random_brain as rand
 import relearn.breakout.brain.nn as nn
+
 
 class Breakout:
 
@@ -83,29 +84,13 @@ class Breakout:
             elif move == 1 and batrect.right > width:
                 batrect.right = width
 
-            # process key presses
-            # for event in pygame.event.get():
-            #     if event.type == pygame.QUIT:
-            #         sys.exit()
-            #     if event.type == pygame.KEYDOWN:
-            #         if event.key == pygame.K_ESCAPE:
-            #             sys.exit()
-            #         if event.key == pygame.K_LEFT:
-            #             batrect = batrect.move(-bat_speed, 0)
-            #             if (batrect.left < 0):
-            #                 batrect.left = 0
-            #         if event.key == pygame.K_RIGHT:
-            #             batrect = batrect.move(bat_speed, 0)
-            #             if (batrect.right > width):
-            #                 batrect.right = width
-
             # check if bat has hit ball    
-            if ballrect.bottom >= batrect.top and \
-                    ballrect.bottom <= batrect.bottom and \
+            if batrect.top <= ballrect.bottom <= batrect.bottom and \
                     ballrect.right >= batrect.left and \
                     ballrect.left <= batrect.right:
                 yspeed = -yspeed
                 pong.play(0)
+                self.brain.new_score(1)
                 offset = ballrect.center[0] - batrect.center[0]
                 # offset > 0 means ball has hit RHS of bat                   
                 # vary angle of ball depending on where ball hits bat                      
@@ -136,6 +121,7 @@ class Breakout:
                 # check if ball has gone past bat - lose a life
             if ballrect.top > height:
                 lives -= 1
+                self.brain.new_score(-100)
                 # start a new ball
                 xspeed = xspeed_init
                 rand = random.random()
@@ -223,7 +209,7 @@ class Wall():
 
 
 if __name__ == '__main__':
-    # brain = rnd.RandomBrain()
+    # brain = rand.RandomBrain()
     brain = nn.ReinforcementLearningBrain()
     br = Breakout(brain)
     i = 0
