@@ -39,7 +39,7 @@ def cnn_model_fn(features, labels, mode):
         inputs=dense, rate=0.4, training=mode == tf.estimator.ModeKeys.TRAIN)
 
     # Logits layer
-    logits = tf.layers.dense(inputs=dropout, units=10)
+    logits = tf.layers.dense(inputs=dropout, units=3)
 
     predictions = {
         "class": tf.argmax(input=logits, axis=1),

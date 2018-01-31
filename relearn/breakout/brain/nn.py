@@ -1,3 +1,5 @@
+from __future__ import division
+
 import numpy as np
 import tensorflow as tf
 import relearn.breakout.cnn as cnn
@@ -17,7 +19,7 @@ class ReinforcementLearningBrain:
         self.classifier = create_cnn()
         self.trained = False
         self.step = 0
-        gama = 0.97  # discount factor
+        self.gama = 0.97  # discount factor
 
     def choose_action(self, state):
         self.step += 1
@@ -39,7 +41,7 @@ class ReinforcementLearningBrain:
 
     def do_random(self):
         _move = np.random.randint(0, 3)
-        new_state = [0, 0, 0]
+        new_state = [0.001, 0.001, 0.001]
         new_state[_move] = 1
         move = _move - 1
         self.actions.append(new_state)
@@ -60,6 +62,24 @@ class ReinforcementLearningBrain:
 
     def calc_q_values(self, score):
         i = len(self.actions)
+        max = np.argmax(self.actions[i - 1])
+        self.actions[i - 1][max] = score
+        print('new actions: %s' % self.actions[i - 1])
+        max_priv = score
+        for j in range(i - 2, 0, -1):
+            print('action %s: %s' % (j, self.actions[j]))
+            max = np.argmax(self.actions[j])
+            new_score = score + self.gama * max_priv
+            if new_score > 1:
+                self.actions[j][max] = 1
+            else:
+                self.actions[j][max] = score + self.gama * max_priv
+            max_priv = self.actions[j][max]
+            print('new actions: %s' % self.actions[j])
+
+    def softmax(self, x):
+        """Compute softmax values for each sets of scores in x."""
+        return np.exp(x) / np.sum(np.exp(x), axis=0)
 
     def train(self):
         train_input_fn = tf.estimator.inputs.numpy_input_fn(

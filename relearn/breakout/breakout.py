@@ -90,7 +90,7 @@ class Breakout:
                     ballrect.left <= batrect.right:
                 yspeed = -yspeed
                 pong.play(0)
-                self.brain.new_score(1)
+                self.brain.new_score(0.7)
                 offset = ballrect.center[0] - batrect.center[0]
                 # offset > 0 means ball has hit RHS of bat                   
                 # vary angle of ball depending on where ball hits bat                      
@@ -121,7 +121,7 @@ class Breakout:
                 # check if ball has gone past bat - lose a life
             if ballrect.top > height:
                 lives -= 1
-                self.brain.new_score(-100)
+                self.brain.new_score(0)
                 # start a new ball
                 xspeed = xspeed_init
                 rand = random.random()
@@ -153,7 +153,7 @@ class Breakout:
                 pong.play(0)
                 wall.brickrect[index:index + 1] = []
                 score += 10
-                self.brain.new_score(score)
+                self.brain.new_score(0.9)
 
             screen.fill(bgcolour)
             scoretext = pygame.font.Font(None, 40).render(str(score), True, (0, 255, 255), bgcolour)
