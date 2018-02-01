@@ -4,11 +4,11 @@ import tensorflow as tf
 def cnn_model_fn(features, labels, mode):
     # Input Layer
     # Reshape X to 4-D tensor: [batch_size, width, height, channels]
-    # input_layer = tf.reshape(features["x"], [-1, 640, 640, 1])
+    input_layer = tf.reshape(features["x"], [-1, 600, 600, 1])
     # input_layer = tf.placeholder(tf.float32, [None, 640, 640, 3], name='input')
     # Convolutional Layer #1
     conv1 = tf.layers.conv2d(
-        inputs=features,
+        inputs=input_layer,
         filters=32,
         kernel_size=[5, 5],
         padding="same",
@@ -29,7 +29,7 @@ def cnn_model_fn(features, labels, mode):
     pool2 = tf.layers.max_pooling2d(inputs=conv2, pool_size=[2, 2], strides=2)
 
     # Flatten tensor into a batch of vectors
-    pool2_flat = tf.reshape(pool2, [-1, 8 * 8 * 64])
+    pool2_flat = tf.reshape(pool2, [-1, 150 * 150 * 64])
 
     # Dense Layer
     dense = tf.layers.dense(inputs=pool2_flat, units=1024, activation=tf.nn.relu)
@@ -47,9 +47,11 @@ def cnn_model_fn(features, labels, mode):
     }
     if mode == tf.estimator.ModeKeys.PREDICT:
         return tf.estimator.EstimatorSpec(mode=mode, predictions=predictions)
-
-    loss = tf.losses.sparse_softmax_cross_entropy(labels=labels, logits=logits)
-
+    # max_label = tf.cast(tf.argmax(labels, axis=1), dtype=tf.int32)
+    # max_label = tf.argmax(labels, axis=1)
+    loss = tf.losses.absolute_difference(labels=labels, predictions=logits)
+    # loss = tf.nn.sparse_softmax_cross_entropy_with_logits(labels=max_label, logits=logits)
+    # loss = tf.losses.sparse_softmax_cross_entropy(labels=labels, logits=logits)
     if mode == tf.estimator.ModeKeys.TRAIN:
         optimizer = tf.train.GradientDescentOptimizer(learning_rate=0.001)
         train_op = optimizer.minimize(

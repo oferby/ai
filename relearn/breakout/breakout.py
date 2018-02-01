@@ -177,7 +177,7 @@ class Breakout:
 
     def choose_action(self):
         s = pygame.Surface.copy(pygame.display.get_surface())
-        state = pygame.surfarray.pixels3d(s)
+        state = pygame.surfarray.pixels2d(s)
         return self.brain.choose_action(state)
 
 

@@ -51,6 +51,8 @@ class ReinforcementLearningBrain:
         print('new score %s' % score)
         print('num of states: %s' % len(self.states))
         self.calc_q_values(score)
+        self.train()
+        self.trained = True
 
     def start(self):
         print('start new game')
@@ -82,17 +84,22 @@ class ReinforcementLearningBrain:
         return np.exp(x) / np.sum(np.exp(x), axis=0)
 
     def train(self):
+        _x = np.array(self.states, dtype=np.float32)
+        _y = np.array(self.actions, dtype=np.float32)
         train_input_fn = tf.estimator.inputs.numpy_input_fn(
-            x={"x": self.states},
-            y=self.actions,
-            batch_size=100,
+            x={"x": _x},
+            y=_y,
+            batch_size=10,
             num_epochs=None,
             shuffle=True)
 
         self.classifier.train(
             input_fn=train_input_fn,
-            steps=100)
+            steps=10)
         self.trained = True
+
+        self.states = []
+        self.actions = []
 
     def predict(self, state):
         cnn_input_fn = tf.estimator.inputs.numpy_input_fn(x={"x": state}, shuffle=False)
