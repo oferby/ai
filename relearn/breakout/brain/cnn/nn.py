@@ -2,7 +2,7 @@ from __future__ import division
 
 import numpy as np
 import tensorflow as tf
-import relearn.breakout.cnn as cnn
+import relearn.breakout.brain.cnn.cnn as cnn
 
 
 def create_cnn():

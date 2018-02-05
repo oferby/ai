@@ -58,11 +58,12 @@ def setup_cnn(mode):
                                 name='dropout')
     print("dropout: ", dropout.shape)
 
-    logits = tf.layers.dense(inputs=dropout, units=10, name='logits')
+    logits = tf.layers.dense(inputs=dense, units=10, name='logits')
     print("logits: ", logits.shape)
 
-    classes = tf.argmax(logits, axis=1)
+
     probability = tf.nn.softmax(logits, name='probability')
+    classes = tf.argmax(probability, axis=1)
 
     merged = tf.summary.merge_all()
 
@@ -75,7 +76,7 @@ def setup_cnn(mode):
     cross_entropy_mean = tf.reduce_mean(cross_entropy, name='cross_entropy')
 
     tf.summary.scalar('xentropy', cross_entropy_mean)
-    train_op = tf.train.GradientDescentOptimizer(0.1).minimize(cross_entropy_mean)
+    train_op = tf.train.GradientDescentOptimizer(0.001).minimize(cross_entropy)
 
     return input_layer, label, train_op, cross_entropy_mean, classes, probability
 
@@ -85,12 +86,13 @@ dataset = ds.get_dataset()
 features = dataset['data']
 labels = dataset['labels']
 
-# indx = 7
+indx = 9
 # test0 = features_to__image(features[indx])
 # plt.figure(num=None, figsize=(1, 1))
 # plt.imshow(test0)
 # plt.show()
 
+# mode = tf.estimator.ModeKeys.PREDICT
 mode = tf.estimator.ModeKeys.TRAIN
 
 graph = tf.Graph()
@@ -106,15 +108,16 @@ with tf.Session(graph=graph) as session:
         saver.restore(session, MODEL_FILE)
     else:
         tf.global_variables_initializer().run()
+        print('initializing.')
 
     if mode == tf.estimator.ModeKeys.PREDICT:
         prediction_, probability_ = session.run([prediction, probability], {inputs: [test0]})
         print ("classes: %s, prediction: %s, real: %s" % (prediction_, probability_, labels[indx]))
 
     elif mode == tf.estimator.ModeKeys.TRAIN:
-        for k in range(100):
+        for k in range(10000):
             i = 1
-            mini_batch = 100
+            mini_batch =100
             while i + mini_batch < 10000:
                 images = []
                 labels_batch = []

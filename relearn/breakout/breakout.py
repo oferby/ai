@@ -22,14 +22,14 @@
 #   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-import sys, pygame, random
-import numpy as np
-import relearn.breakout.brain.random_brain as rand
-import relearn.breakout.brain.nn as nn
+import pygame
+import random
+
+import relearn.breakout.brain.cnn.nn as cnn
+import relearn.breakout.brain.nn.nn_brain as nn
 
 
 class Breakout:
-
     def __init__(self, brain):
         self.brain = brain
 
@@ -73,7 +73,7 @@ class Breakout:
         while 1:
 
             # 60 frames per second
-            clock.tick(300)
+            clock.tick(100)
 
             move = self.choose_action()
 
@@ -86,8 +86,8 @@ class Breakout:
 
             # check if bat has hit ball    
             if batrect.top <= ballrect.bottom <= batrect.bottom and \
-                    ballrect.right >= batrect.left and \
-                    ballrect.left <= batrect.right:
+                            ballrect.right >= batrect.left and \
+                            ballrect.left <= batrect.right:
                 yspeed = -yspeed
                 pong.play(0)
                 self.brain.new_score(0.7)
@@ -146,7 +146,7 @@ class Breakout:
             index = ballrect.collidelist(wall.brickrect)
             if index != -1:
                 if ballrect.center[0] > wall.brickrect[index].right or \
-                        ballrect.center[0] < wall.brickrect[index].left:
+                                ballrect.center[0] < wall.brickrect[index].left:
                     xspeed = -xspeed
                 else:
                     yspeed = -yspeed
@@ -177,12 +177,11 @@ class Breakout:
 
     def choose_action(self):
         s = pygame.Surface.copy(pygame.display.get_surface())
-        state = pygame.surfarray.pixels2d(s)
+        state = pygame.surfarray.pixels3d(s)[:,:,1]
         return self.brain.choose_action(state)
 
 
 class Wall():
-
     def __init__(self):
         self.brick = pygame.image.load("brick.png").convert()
         brickrect = self.brick.get_rect()
@@ -210,7 +209,8 @@ class Wall():
 
 if __name__ == '__main__':
     # brain = rand.RandomBrain()
-    brain = nn.ReinforcementLearningBrain()
+    # brain = cnn.ReinforcementLearningBrain()
+    brain = nn.SimpleNeuralNetworkBrain()
     br = Breakout(brain)
     i = 0
     while 1:
