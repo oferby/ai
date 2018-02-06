@@ -1,6 +1,9 @@
 import tensorflow as tf
 import time
 import numpy as np
+import os
+
+MODEL_FILE = '/opt/tf/cnn1'
 
 
 def create_nn():
@@ -24,7 +27,14 @@ class SimpleNeuralNetworkBrain:
     def __init__(self):
         self.inputs, self.prediction, self.decision, self.train_step, self.label, self.loss = create_nn()
         self.session = tf.Session()
-        self.session.run(tf.global_variables_initializer())
+
+        self.saver = tf.train.Saver()
+        if os.path.isfile(MODEL_FILE + ".index"):
+            print('restoring model.')
+            self.saver.restore(self.session, MODEL_FILE)
+        else:
+            print('initializing model.')
+            self.session.run(tf.global_variables_initializer())
 
         self.prev_state = np.zeros((1, 360000))
 
@@ -41,8 +51,8 @@ class SimpleNeuralNetworkBrain:
         self.prev_state = s_
 
         self.step += 1
-        coin = np.random.randint(3000 + self.step)
-        if coin > 2500:
+        coin = np.random.randint(100)
+        if coin > 20:
             decision_, prediction_ = self.session.run([self.decision, self.prediction],
                                                       {self.inputs: state_})
         else:
@@ -62,7 +72,9 @@ class SimpleNeuralNetworkBrain:
 
     def new_score(self, score):
         self.calc_q_values(score)
-        self.train()
+        trained = self.train()
+        if (score == 1 or score == 0) and trained:
+            self.reset()
 
     def calc_q_values(self, score):
         print ('calculating Q values')
@@ -72,28 +84,33 @@ class SimpleNeuralNetworkBrain:
             decay *= self.gama
 
     def train(self):
+        if len(self.states) < 3:
+            print ('memory is empty')
+            return False
         states_ = np.asanyarray(self.states[1:])
         labels_ = np.asanyarray(self.values[1:])
+
         print ('training network')
-        for i in range(10):
+        for i in range(3):
             _, loss = self.session.run([self.train_step, self.loss], {self.inputs: states_, self.label: labels_})
             print ('loss: %s', loss)
-        self.reset()
         print('done training')
+        return True
 
     def start(self):
         print('start new game')
-        self.reset()
 
     def end(self):
         print('end of game')
-        self.reset()
+        print('saving model to file')
+        self.saver.save(self.session, MODEL_FILE)
 
     def predict(self, state):
         pass
 
     def reset(self):
-        if len(self.states) > 200:
-            self.states = []
-            self.values = []
-            self.actions = []
+        print('resetting memory')
+        # if len(self.states) > 200:
+        self.states = []
+        self.values = []
+        self.actions = []

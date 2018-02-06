@@ -153,7 +153,7 @@ class Breakout:
                 pong.play(0)
                 wall.brickrect[index:index + 1] = []
                 score += 10
-                self.brain.new_score(0.9)
+                self.brain.new_score(1.0)
 
             screen.fill(bgcolour)
             scoretext = pygame.font.Font(None, 40).render(str(score), True, (0, 255, 255), bgcolour)
