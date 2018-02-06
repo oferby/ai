@@ -21,6 +21,7 @@ import numpy as np
 import tensorflow as tf
 import dataset.cfar10 as ds
 import matplotlib.pyplot as plt
+import time
 
 tf.logging.set_verbosity(tf.logging.INFO)
 
@@ -85,7 +86,7 @@ def cnn_model_fn(features, labels, mode):
         mode=mode, loss=loss, eval_metric_ops=eval_metric_ops)
 
 
-dataset = ds.get_dataset()
+dataset = ds.get_dataset(train=False)
 
 train_data = np.array(dataset['data'], dtype=np.float32)
 train_labels = np.array(dataset['labels'], dtype=np.int32)
@@ -93,6 +94,7 @@ train_labels = np.array(dataset['labels'], dtype=np.int32)
 cnn_classifier = tf.estimator.Estimator(
     model_fn=cnn_model_fn, model_dir="/tmp/cnn_convnet_model")
 
+t = time.clock()
 indx = np.random.randint(0, len(train_labels))
 cnn_input_fn = tf.estimator.inputs.numpy_input_fn(x={"x": train_data[indx].reshape((1, -1))}, shuffle=False)
 
@@ -100,7 +102,8 @@ result = cnn_classifier.predict(cnn_input_fn)
 
 r = result.next()
 print(r)
-print ('class: %s' % classes[r['class']])
+print('class: %s, probability: %s' % (classes[r['class']], r['probabilities'][r['class']]))
+print('time:', time.clock() - t)
 
 test0 = features_to__image(train_data[indx])
 plt.figure(num=None, figsize=(1, 1))
