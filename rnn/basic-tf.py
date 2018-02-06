@@ -1,3 +1,10 @@
+'''
+
+    First try.
+    Less neurons in the hidden layer and the actual output is not fed into the next cell.
+
+'''
+
 import tensorflow as tf
 import collections as coll
 from random import shuffle
@@ -52,6 +59,5 @@ with tf.Session() as session:
         x_ = np.zeros(10)
         x_[d[0]] = 1
         h_ = session.run(y_class, {x: [x_]})
-        print('x:', d[0], 'h:',h_)
+        print('x:', d[0], 'h:', h_)
         d.rotate(-1)
-
