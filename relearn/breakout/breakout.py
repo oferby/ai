@@ -27,6 +27,7 @@ import random
 
 import relearn.breakout.brain.cnn.nn as cnn
 import relearn.breakout.brain.nn.nn_brain as nn
+import relearn.breakout.brain.random_brain as rand
 
 
 class Breakout:
@@ -70,10 +71,12 @@ class Breakout:
         pygame.key.set_repeat(1, 30)
         pygame.mouse.set_visible(0)  # turn off mouse pointer
 
+        prev_screen = pygame.Surface.copy()
+
         while 1:
 
             # 60 frames per second
-            clock.tick(100)
+            clock.tick(60)
 
             move = self.choose_action()
 
@@ -176,7 +179,7 @@ class Breakout:
             pygame.display.flip()
 
     def choose_action(self):
-        s = pygame.Surface.copy(pygame.display.get_surface())
+        s = pygame.Surface.copy()
         state = pygame.surfarray.pixels3d(s)[:,:,1]
         return self.brain.choose_action(state)
 
@@ -208,9 +211,9 @@ class Wall():
 
 
 if __name__ == '__main__':
-    # brain = rand.RandomBrain()
+    brain = rand.RandomBrain()
     # brain = cnn.ReinforcementLearningBrain()
-    brain = nn.SimpleNeuralNetworkBrain()
+    # brain = nn.SimpleNeuralNetworkBrain()
     br = Breakout(brain)
     i = 0
     while 1:

@@ -1,0 +1,13 @@
+create new router
+start vm4
+delete switch s1
+new switch
+connect vm1 to vm3
+allow traffic from vm1 to vm4
+create az
+create availability zone
+connect r1 to s2
+find path from web1 to mysql7
+stop vm3
+show path from vm1 to vm3
+deny traffic from vm5 to mysql2
